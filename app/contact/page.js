@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().min(3, "Nama minimal 3 karakter"),
+  email: z.string().email("Email tidak valid"),
+  message: z.string().min(5, "Pesan terlalu pendek"),
+});
 
 export default function Contact() {
   const [name, setName] = useState("");
@@ -11,10 +18,31 @@ export default function Contact() {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const handleSubmit = async () => {
-    setLoading(true);
     setSuccess(false);
+    setErrors({});
+
+    const validation = contactSchema.safeParse({
+      name,
+      email,
+      message,
+    });
+
+    if (!validation.success) {
+      const fieldErrors = validation.error.flatten().fieldErrors;
+
+      setErrors({
+        name: fieldErrors.name?.[0],
+        email: fieldErrors.email?.[0],
+        message: fieldErrors.message?.[0],
+      });
+
+      return;
+    }
+
+    setLoading(true);
 
     const { error } = await supabase
       .from("contacts")
@@ -34,6 +62,7 @@ export default function Contact() {
       alert("Failed to send message");
     } else {
       setSuccess(true);
+      setErrors({});
 
       setName("");
       setEmail("");
@@ -56,19 +85,27 @@ export default function Contact() {
         <input
           type="text"
           placeholder="Your Name"
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
+          className="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+        {errors.name && (
+          <p className="text-red-400 text-sm mt-1 mb-4">{errors.name}</p>
+        )}
+        {!errors.name && <div className="mb-4" />}
 
         {/* EMAIL */}
         <input
           type="email"
           placeholder="Your Email"
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
+          className="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        {errors.email && (
+          <p className="text-red-400 text-sm mt-1 mb-4">{errors.email}</p>
+        )}
+        {!errors.email && <div className="mb-4" />}
 
         {/* SERVICE */}
         <select
@@ -86,10 +123,14 @@ export default function Contact() {
         <textarea
           placeholder="Your Message"
           rows="4"
-          className="w-full p-3 mb-4 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
+          className="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:border-blue-500"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
+        {errors.message && (
+          <p className="text-red-400 text-sm mt-1 mb-4">{errors.message}</p>
+        )}
+        {!errors.message && <div className="mb-4" />}
 
         {/* BUTTON */}
         <button
