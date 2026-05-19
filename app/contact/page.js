@@ -58,7 +58,6 @@ export default function Contact() {
     setLoading(false);
 
     if (error) {
-      console.log(error);
       alert("Failed to send message");
     } else {
       setSuccess(true);

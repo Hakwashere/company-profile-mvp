@@ -28,7 +28,6 @@ function DashboardContent() {
       const { data, error } = await supabaseQuery;
 
       if (error) {
-        console.log(error);
         setContacts([]);
         return;
       }
@@ -64,7 +63,6 @@ function DashboardContent() {
     const { error } = await supabase.from("contacts").delete().eq("id", id);
 
     if (error) {
-      console.log(error);
       alert("Failed to delete contact message");
       setContacts(previousContacts);
     }
